@@ -1,32 +1,40 @@
 import socket
+import time
 from tools import backup_project
+from globaldata import SERVER_SETTINGS
+
+
+class Server:
+    def __init__(self, port):
+        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_address = ('localhost', port)
+        self.udp_socket.bind(self.server_address)
+        print(f"Server started on port {port}... Waiting for clients.")
+
+        self.start_time = time.time()
+        self.elapsed_time = time.time() - self.start_time
+        
+        self.clients = 0
+        self.client_addresses = []
+    
+    def exit(self):
+        self.udp_socket.close()
+        print("Server shutting down.")
 
 
 def main(port):
-    # Create a UDP socket
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
-    # Bind the socket to the server address and port
-    server_address = ('localhost', port)
-    udp_socket.bind(server_address)
+    server = Server(port)
     
-    print(f"Server started on port {port}... Waiting for clients.")
-    
-    # Listen for two clients
-    clients = 0
-    while clients < 2:
-        # Wait for a message from a client
-        data, address = udp_socket.recvfrom(4096)
-        print(f"Received message from {address}: {data.decode()}")
-        
-        clients += 1
-        print(f"Client {clients} connected.")
-    
-    # Close the socket
-    udp_socket.close()
-    print("Server shutting down.")
+    run = True
+    while run:
+
+        server.elapsed_time = time.time() - server.start_time
+        time.sleep(max(0, SERVER_SETTINGS.TICK_INTERVAL - server.elapsed_time))
+
+    server.exit()
 
 
 if __name__ == "__main__":
     backup_project()
-    main(5001)
+    main(5011)
