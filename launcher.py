@@ -49,7 +49,7 @@ def main():
             "mode": "join",
             "username": j_username_entry.get(),
             "ip": j_ip_entry.get(),
-            "port": j_port_entry.get()
+            "port": int(j_port_entry.get())
         }
         root.destroy()  # Close the window
 
@@ -76,7 +76,7 @@ def main():
             "mode": "host",
             "username": None,
             "ip": None,
-            "port": h_port_entry.get()
+            "port": int(h_port_entry.get())
         }
         root.destroy()  # Close the window
 
@@ -108,7 +108,7 @@ def main():
             "mode": "host_join",
             "username": h_j_username_entry.get(),
             "ip": None,
-            "port": h_j_port_entry.get()
+            "port": int(h_j_port_entry.get())
         }
         root.destroy()  # Close the window
 
