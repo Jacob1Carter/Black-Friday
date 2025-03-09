@@ -1,7 +1,7 @@
-from tools import backup_project
+import time
 import launcher
-import server
-import client
+import subprocess
+print("main.py")
 
 def main():
     launch_settings = launcher.main()
@@ -9,18 +9,18 @@ def main():
         exit("Launch settings not provided.")
     
     if launch_settings["mode"] == "join":
-        client.main(launch_settings["username"], launch_settings["ip"], launch_settings["port"])
+        subprocess.run(["python", "client.py", launch_settings["username"], launch_settings["ip"]])
     elif launch_settings["mode"] == "host":
-        server.main(launch_settings["port"])
-    elif launch_settings["mode"] == "all":
-        server.main(launch_settings["port"])
-        client.main(launch_settings["username"], launch_settings["ip"], launch_settings["port"])
+        subprocess.run(["python", "server.py"])
+    elif launch_settings["mode"] == "host_join":
+        subprocess.Popen(["python", "server.py"])
+        time.sleep(1)
+        subprocess.run(["python", "client.py", launch_settings["username"], "localhost"])
     else:
         exit("Invalid data provided:\n" + str(launch_settings))
 
 
 if __name__ == "__main__":
-    backup_project()
     main()
 
 

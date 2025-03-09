@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+print("launcher.py")
 
 def show_page(notebook, page_index):
     notebook.select(page_index)
@@ -12,8 +13,7 @@ def main():
     main.data = {
             "mode": None,
             "username": None,
-            "ip": None,
-            "port": None
+            "ip": None
         }
 
     notebook = ttk.Notebook(root)
@@ -39,17 +39,11 @@ def main():
     j_ip_entry = ttk.Entry(join_page)
     j_ip_entry.pack(pady=10)
 
-    j_port_label = ttk.Label(join_page, text="Port:")
-    j_port_label.pack(pady=10)
-    j_port_entry = ttk.Entry(join_page)
-    j_port_entry.pack(pady=10)
-
     def send_join_data():
         main.data = {
             "mode": "join",
             "username": j_username_entry.get(),
-            "ip": j_ip_entry.get(),
-            "port": int(j_port_entry.get())
+            "ip": j_ip_entry.get()
         }
         root.destroy()  # Close the window
 
@@ -66,17 +60,14 @@ def main():
     h_page_title = ttk.Label(host_page, text="Host")
     h_page_title.pack(pady=10)
 
-    h_port_label = ttk.Label(host_page, text="Port:")
-    h_port_label.pack(pady=10)
-    h_port_entry = ttk.Entry(host_page)
-    h_port_entry.pack(pady=10)
+    h_page_placeholder = ttk.Label(host_page, text="More settings go here later")
+    h_page_placeholder.pack(pady=10)
 
     def send_host_data():
         main.data = {
             "mode": "host",
             "username": None,
-            "ip": None,
-            "port": int(h_port_entry.get())
+            "ip": None
         }
         root.destroy()  # Close the window
 
@@ -98,17 +89,11 @@ def main():
     h_j_username_entry = ttk.Entry(host_join_page)
     h_j_username_entry.pack(pady=10)
 
-    h_j_port_label = ttk.Label(host_join_page, text="Port:")
-    h_j_port_label.pack(pady=10)
-    h_j_port_entry = ttk.Entry(host_join_page)
-    h_j_port_entry.pack(pady=10)
-
     def send_host_join_data():
         main.data = {
             "mode": "host_join",
             "username": h_j_username_entry.get(),
-            "ip": None,
-            "port": int(h_j_port_entry.get())
+            "ip": None
         }
         root.destroy()  # Close the window
 
