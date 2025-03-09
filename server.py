@@ -16,7 +16,7 @@ class Server:
         self.SERVER_SETTINGS = self.SERVER_SETTINGS()
         # server details
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server_address = ('localhost', 5011)
+        self.server_address = ('0.0.0.0', 5011)  # Bind to all available network interfaces
         self.udp_socket.bind(self.server_address)
 
         # elapsed time counter
@@ -36,14 +36,15 @@ class Server:
             print(f"Received message from {address}: {data.decode()}")
         except socket.timeout:
             pass
+        except Exception as e:
+            print(f"Error receiving message: {e}")
     
     def exit(self):
         self.udp_socket.close()
         print("Server shutting down.")
 
-
 def main():
-    
+    print("Server is starting...")
     server = Server()
     
     run = True
@@ -54,7 +55,6 @@ def main():
         time.sleep(max(0, server.SERVER_SETTINGS.TICK_INTERVAL - server.elapsed_time))
 
     server.exit()
-
 
 if __name__ == "__main__":
     main()

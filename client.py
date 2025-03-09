@@ -3,7 +3,6 @@ import time
 import sys
 print("client.py")
 
-
 class Client:
 
     def __init__(self, username, ip):
@@ -30,12 +29,10 @@ class Client:
         self.udp_socket.close()
         print("Client shutting down.")
 
-
 def main(username, ip):
-
+    print(f"Client starting with username: {username}, IP: {ip}")
     client = Client(username=username, ip=ip)
     #client.exit()
-
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
