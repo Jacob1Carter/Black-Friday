@@ -11,8 +11,12 @@ def main():
     if launch_settings["mode"] == "join":
         subprocess.run(["python", "client.py", launch_settings["username"], launch_settings["ip"]])
     elif launch_settings["mode"] == "host":
+        # subprocess.run(["firewall_rule.bat"])
+
         subprocess.run(["python", "server.py"])
     elif launch_settings["mode"] == "host_join":
+        # subprocess.run(["firewall_rule.bat"])
+
         subprocess.Popen(["python", "server.py"])
         time.sleep(1)
         subprocess.run(["python", "client.py", launch_settings["username"], "localhost"])
