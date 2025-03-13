@@ -1,7 +1,9 @@
 import time
 import launcher
 import subprocess
-print("main.py")
+from tools import fprint
+fprint("main.py")
+
 
 def main():
     launch_settings = launcher.main()

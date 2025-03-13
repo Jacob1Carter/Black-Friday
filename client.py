@@ -1,9 +1,17 @@
 import socket
 import time
 import sys
-print("client.py")
+import struct
+from tools import fprint
+fprint("client.py")
 
 class Client:
+
+    class SERVER_SETTINGS:
+        def __init__(self, max_clients=4, tick_rate=30):
+            self.MAX_CLIENTS = 4
+            self.TICK_RATE = 30
+            self.TICK_INTERVAL = 1 / self.TICK_RATE
 
     def __init__(self, username, ip):
         # client details
@@ -18,25 +26,153 @@ class Client:
         self.elapsed_time = time.time() - self.start_time
 
         # send connection confirmation to server
-        confirmation = f"{self.username} connected".encode()
-        self.udp_socket.sendto(confirmation, self.server_address)
-        print(f"Sent connection confirmation to {self.server_address}")
+        message = f"request-server-settings"
+        data = self.prep_single_data(message=message)
+        self.send_data(data)
+        fprint(f"Sent server settings request to {self.server_address}")
+        time.sleep(1)
+
+        self.receive_data()
     
+    def prep_single_data(self, message):
+        data_type = 2
+        message_length = len(message)
+        data = struct.pack('!B H', data_type, message_length) + message.encode('utf-8')
+        return data
+
+    def prep_tick_data(self):
+        data_type = 1
+        keys = {
+            "w": 0,
+            "a": 0,
+            "s": 0,
+            "d": 0,
+            "SPACE": 0,
+            "SHIFT": 0,
+            "e": 0,
+            "f": 0,
+            "r": 0,
+            "q": 0,
+            "ESC": 0
+        }
+        mouse_pos = {"x": 0, "y": 0}
+        mouse_buttons = {
+            "left": 0,
+            "right": 0,
+            "middle": 0,
+            "back": 0,
+            "forward": 0
+        }
+        data = struct.pack(
+            '!B 11H 2H 5B',
+            data_type,
+            keys["w"], keys["a"], keys["s"], keys["d"], keys["SPACE"], keys["SHIFT"],
+            keys["e"], keys["f"], keys["r"], keys["q"], keys["ESC"],
+            mouse_pos["x"], mouse_pos["y"],
+            mouse_buttons["left"], mouse_buttons["right"], mouse_buttons["middle"],
+            mouse_buttons["back"], mouse_buttons["forward"]
+        )
+        return data
+
+    def receive_data(self):
+        try:
+            data, address = self.udp_socket.recvfrom(1024)
+            fprint(f"Received data of length {len(data)} from {address}")
+            data_type = struct.unpack('!B', data[:1])[0]
+
+            if data_type == 0:  # Server settings
+                expected_size = struct.calcsize('!I f')
+                fprint(f"Expected size for server settings: {expected_size}")
+                if len(data[1:]) == expected_size:
+                    max_clients, tick_rate = struct.unpack('!I f', data[1:])
+                    fprint(f"Received server settings: MAX_CLIENTS={max_clients}, TICK_RATE={tick_rate}")
+                    self.SERVER_SETTINGS = self.SERVER_SETTINGS(max_clients=max_clients, tick_rate=tick_rate)
+                else:
+                    fprint(f"Error: Received data size {len(data[1:])} does not match expected size {expected_size}")
+
+            elif data_type == 1:  # Tick data
+                offset = 1
+                entities = []
+                while offset < len(data):
+                    entity_id, sprite_length = struct.unpack('!I H', data[offset:offset+6])
+                    offset += 6
+                    sprite = struct.unpack(f'!{sprite_length}s', data[offset:offset+sprite_length])[0].decode('utf-8')
+                    offset += sprite_length
+                    x, y, scale, angle = struct.unpack('!f f f f', data[offset:offset+16])
+                    offset += 16
+                    entities.append({
+                        "id": entity_id,
+                        "sprite": sprite,
+                        "position": {"x": x, "y": y},
+                        "scale": scale,
+                        "angle": angle
+                    })
+                fprint(f"Received game state: entities={entities}")
+
+                # Now unpack player data
+                expected_size = struct.calcsize('!f f f f I f')
+                fprint(f"Expected size for player data: {expected_size}")
+                if len(data[offset:]) == expected_size:
+                    player_data = struct.unpack('!f f f f I f', data[offset:])
+                    player_info = {
+                        "x": player_data[0],
+                        "y": player_data[1],
+                        "angle": player_data[2],
+                        "scale": player_data[3],
+                        "health": player_data[4],
+                        "ability_1_cooldown": player_data[5]
+                    }
+                    fprint(f"Received player data: {player_info}")
+                else:
+                    fprint(f"Error: Received data size {len(data[offset:])} does not match expected size {expected_size}")
+
+            elif data_type == 2:  # Confirmation message or other simple string
+                message_length = struct.unpack('!H', data[1:3])[0]
+                fprint(f"Expected size for message: {message_length}")
+                if len(data[3:3+message_length]) == message_length:
+                    message = data[3:3+message_length].decode('utf-8')
+                    fprint(f"Received message from {address}: {message}")
+                else:
+                    fprint(f"Error: Received data size {len(data[3:3+message_length])} does not match expected size {message_length}")
+
+            else:
+                fprint(f"Unknown data type received from {address}")
+
+        except socket.timeout:
+            pass
+        except Exception as e:
+            fprint(f"Error receiving message: {e}")
+
+    def send_data(self, data):
+        self.udp_socket.sendto(data, self.server_address)
+
     def exit(self):
         # send disconnection message to server
-        confirmation = f"{self.username} is disconnecting".encode()
-        self.udp_socket.sendto(confirmation, self.server_address)
-        self.udp_socket.close()
-        print("Client shutting down.")
+        message = f"{self.username} is disconnecting"
+        data = self.prep_single_data(message=message)
+        self.send_data(data)
+        fprint("Client shutting down.")
 
 def main(username, ip):
-    print(f"Client starting with username: {username}, IP: {ip}")
+    fprint(f"Client starting with username: {username}, IP: {ip}")
     client = Client(username=username, ip=ip)
-    #client.exit()
+
+    run = True
+    while run:
+        client.receive_data()
+        client.send_data(client.prep_tick_data())
+        client.elapsed_time = time.time() - client.start_time
+
+        if client.elapsed_time > 2:
+            run = False
+
+        time.sleep(max(0, client.SERVER_SETTINGS.TICK_INTERVAL - client.elapsed_time % client.SERVER_SETTINGS.TICK_INTERVAL))
+
+    client.exit()
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Invalid data provided.")
+        fprint("Invalid data provided.")
         sys.exit(1)
     else:
         main(username=sys.argv[1], ip=sys.argv[2])

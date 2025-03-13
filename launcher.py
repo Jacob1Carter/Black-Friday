@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
-print("launcher.py")
+from tools import fprint
+fprint("launcher.py")
 
 def show_page(notebook, page_index):
     notebook.select(page_index)
@@ -106,4 +107,4 @@ def main():
 
 if __name__ == "__main__":
     settings = main()
-    print(settings)
+    fprint(settings)

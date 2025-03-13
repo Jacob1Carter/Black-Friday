@@ -13,11 +13,11 @@ def add_firewall_rule():
     action = "allow"
 
     if rule_exists(rule_name):
-        print(f"Firewall rule '{rule_name}' already exists.")
+        fprint(f"Firewall rule '{rule_name}' already exists.")
     else:
         command = f'netsh advfirewall firewall add rule name="{rule_name}" protocol={protocol} dir={direction} localport={port} action={action}'
         subprocess.run(command, shell=True)
-        print(f"Firewall rule '{rule_name}' added successfully.")
+        fprint(f"Firewall rule '{rule_name}' added successfully.")
 
 if __name__ == "__main__":
     add_firewall_rule()

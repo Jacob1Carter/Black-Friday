@@ -1,4 +1,4 @@
-import os, zipfile
+import os, zipfile, inspect
 
 def convert_str_to_bool(data):
     if isinstance(data, dict):
@@ -23,3 +23,9 @@ def backup_project():
                     arcname = os.path.relpath(file_path, os.getcwd())
                     zipf.write(file_path, arcname)
     return "Saved"
+
+
+def fprint(*args, **kwargs):
+    frame = inspect.currentframe().f_back
+    filename = os.path.basename(frame.f_globals['__file__'])
+    print(f"[{filename}]", *args, **kwargs)

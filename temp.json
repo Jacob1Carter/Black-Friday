@@ -1,0 +1,28 @@
+{
+    "keys": {
+        "w": 0,
+        "a": 0,
+        "s": 0,
+        "d": 0,
+        "SPACE": 0,
+        "SHIFT": 0,
+        "e": 0,
+        "f": 0,
+        "r": 0,
+        "q": 0,
+        "ESC": 0
+    },
+    "mouse": {
+        "pos": {
+            "x": 0,
+            "y": 0
+        },
+        "buttons": {
+            "left": 0,
+            "right": 0,
+            "middle": 0,
+            "back": 0,
+            "forward": 0
+        }
+    }
+}
