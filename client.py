@@ -53,7 +53,8 @@ class Client:
             "f": 0,
             "r": 0,
             "q": 0,
-            "ESC": 0
+            "ESC": 0,
+            "CTRL": 0
         }
         mouse_pos = {"x": 0, "y": 0}
         mouse_buttons = {
@@ -64,10 +65,10 @@ class Client:
             "forward": 0
         }
         data = struct.pack(
-            '!B 11H 2H 5B',
+            '!B 12H 2H 5B',
             data_type,
             keys["w"], keys["a"], keys["s"], keys["d"], keys["SPACE"], keys["SHIFT"],
-            keys["e"], keys["f"], keys["r"], keys["q"], keys["ESC"],
+            keys["e"], keys["f"], keys["r"], keys["q"], keys["ESC"], keys["CTRL"],
             mouse_pos["x"], mouse_pos["y"],
             mouse_buttons["left"], mouse_buttons["right"], mouse_buttons["middle"],
             mouse_buttons["back"], mouse_buttons["forward"]
@@ -82,18 +83,19 @@ class Client:
 
             if data_type == 0:  # Server settings
                 expected_size = struct.calcsize('!I f')
-                fprint(f"Expected size for server settings: {expected_size}")
                 if len(data[1:]) == expected_size:
                     max_clients, tick_rate = struct.unpack('!I f', data[1:])
-                    fprint(f"Received server settings: MAX_CLIENTS={max_clients}, TICK_RATE={tick_rate}")
+                    fprint(f"Received server settings")
                     self.SERVER_SETTINGS = self.SERVER_SETTINGS(max_clients=max_clients, tick_rate=tick_rate)
                 else:
                     fprint(f"Error: Received data size {len(data[1:])} does not match expected size {expected_size}")
 
             elif data_type == 1:  # Tick data
                 offset = 1
+                num_entities = struct.unpack('!I', data[offset:offset+4])[0]
+                offset += 4
                 entities = []
-                while offset < len(data):
+                for _ in range(num_entities):
                     entity_id, sprite_length = struct.unpack('!I H', data[offset:offset+6])
                     offset += 6
                     sprite = struct.unpack(f'!{sprite_length}s', data[offset:offset+sprite_length])[0].decode('utf-8')
@@ -107,11 +109,10 @@ class Client:
                         "scale": scale,
                         "angle": angle
                     })
-                fprint(f"Received game state: entities={entities}")
+                # fprint(f"Received game state: entities={entities}")
 
                 # Now unpack player data
                 expected_size = struct.calcsize('!f f f f I f')
-                fprint(f"Expected size for player data: {expected_size}")
                 if len(data[offset:]) == expected_size:
                     player_data = struct.unpack('!f f f f I f', data[offset:])
                     player_info = {
@@ -122,13 +123,12 @@ class Client:
                         "health": player_data[4],
                         "ability_1_cooldown": player_data[5]
                     }
-                    fprint(f"Received player data: {player_info}")
+                    # fprint(f"Received player data: {player_info}")
                 else:
                     fprint(f"Error: Received data size {len(data[offset:])} does not match expected size {expected_size}")
 
             elif data_type == 2:  # Confirmation message or other simple string
                 message_length = struct.unpack('!H', data[1:3])[0]
-                fprint(f"Expected size for message: {message_length}")
                 if len(data[3:3+message_length]) == message_length:
                     message = data[3:3+message_length].decode('utf-8')
                     fprint(f"Received message from {address}: {message}")
@@ -145,6 +145,7 @@ class Client:
 
     def send_data(self, data):
         self.udp_socket.sendto(data, self.server_address)
+        fprint(f"Sent data of length {len(data)} to {self.server_address}")
 
     def exit(self):
         # send disconnection message to server

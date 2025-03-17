@@ -44,7 +44,6 @@ class Server:
 
             if data_type == 1:  # Key and mouse inputs
                 expected_size = struct.calcsize('!12H 2H 5B')
-                fprint(f"Expected size for key and mouse inputs: {expected_size}")
                 if len(data[1:]) == expected_size:
                     unpacked_data = struct.unpack('!12H 2H 5B', data[1:])
                     keys = {
@@ -58,7 +57,8 @@ class Server:
                         "f": unpacked_data[7],
                         "r": unpacked_data[8],
                         "q": unpacked_data[9],
-                        "ESC": unpacked_data[10]
+                        "ESC": unpacked_data[10],
+                        "CTRL": unpacked_data[11]
                     }
                     mouse_pos = {"x": unpacked_data[12], "y": unpacked_data[13]}
                     mouse_buttons = {
@@ -68,21 +68,20 @@ class Server:
                         "back": unpacked_data[17],
                         "forward": unpacked_data[18]
                     }
-                    fprint(f"Received message from {address}: keys={keys}, mouse_pos={mouse_pos}, mouse_buttons={mouse_buttons}")
                 else:
                     fprint(f"Error: Received data size {len(data[1:])} does not match expected size {expected_size}")
 
             elif data_type == 2:  # Confirmation message or other simple string
                 message_length = struct.unpack('!H', data[1:3])[0]
-                fprint(f"Expected size for message: {message_length}")
                 if len(data[3:3+message_length]) == message_length:
                     message = data[3:3+message_length].decode('utf-8')
-                    fprint(f"Received message from {address}: {message}")
                     if message == "request-server-settings":
                         fprint(f"Received server settings request from {address}")
                         server_data = self.prep_server_data()
                         self.send_data(server_data, client_address=address)
                         fprint(f"Sent server settings to {address}")
+                    else:
+                        fprint(f"Received message from {address}: {message}")
                 else:
                     fprint(f"Error: Received data size {len(data[3:3+message_length])} does not match expected size {message_length}")
 
@@ -108,7 +107,7 @@ class Server:
             (1, "entity1.png", 100, 150, 1.0, 0),
             (2, "entity2.png", 200, 250, 1.5, 45)
         ]
-        entity_data = b''
+        entity_data = struct.pack('!I', len(entities))  # Include the number of entities
         for entity in entities:
             entity_id, sprite, x, y, scale, angle = entity
             sprite_encoded = sprite.encode('utf-8')
@@ -145,10 +144,12 @@ class Server:
         for client_addr in self.client_addresses:
             player_data = self.prep_player_data(client=client_addr)
             total_data = struct.pack('!B', data_type) + entity_data + player_data
+            total_data_length = len(total_data)
             self.send_data(total_data, client_address=client_addr)
 
     def send_data(self, data, client_address=None):
         self.udp_socket.sendto(data, client_address or self.server_address)
+        fprint(f"Sent data of length {len(data)} to {client_address or 'all clients'}")
 
     def exit(self):
         self.udp_socket.close()
