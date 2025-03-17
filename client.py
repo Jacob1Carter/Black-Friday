@@ -2,6 +2,7 @@ import socket
 import time
 import sys
 import struct
+from game import Game
 from tools import fprint
 fprint("client.py")
 
@@ -157,10 +158,14 @@ class Client:
 def main(username, ip):
     fprint(f"Client starting with username: {username}, IP: {ip}")
     client = Client(username=username, ip=ip)
+    game = Game()
 
     run = True
     while run:
         client.receive_data()
+
+        game.update()
+
         client.send_data(client.prep_tick_data())
         client.elapsed_time = time.time() - client.start_time
 

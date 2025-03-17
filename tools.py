@@ -13,6 +13,7 @@ def convert_str_to_bool(data):
             return False
     return data
 
+
 def backup_project():
     zip_path = os.path.join(os.getcwd(), f'{os.path.basename(os.getcwd())}.zip')
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
