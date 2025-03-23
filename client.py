@@ -169,12 +169,13 @@ def main(username, ip):
         client.send_data(client.prep_tick_data())
         client.elapsed_time = time.time() - client.start_time
 
-        if client.elapsed_time > 2:
-            run = False
+        #if client.elapsed_time > 2:
+            #run = False
 
         time.sleep(max(0, client.SERVER_SETTINGS.TICK_INTERVAL - client.elapsed_time % client.SERVER_SETTINGS.TICK_INTERVAL))
 
     client.exit()
+    game.pygame.quit()
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

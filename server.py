@@ -166,8 +166,8 @@ def main():
         server.send_tick_data()
         server.elapsed_time = time.time() - server.start_time
 
-        if server.elapsed_time > 3:
-            run = False
+        #if server.elapsed_time > 3:
+            #run = False
 
         time.sleep(max(0, server.SERVER_SETTINGS.TICK_INTERVAL - server.elapsed_time % server.SERVER_SETTINGS.TICK_INTERVAL))
     

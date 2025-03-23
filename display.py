@@ -7,9 +7,9 @@ class Display:
         self.name = "Black Friday"
         self.WIDTH = 800
         self.HEIGHT = 600
-        self.UI
+        self.UI = True
 
-        self.win = self.game.pygame.display.set_mode((self.width, self.height))
+        self.win = self.game.pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.game.pygame.display.set_caption(self.game.name)
     
     def update(self):
