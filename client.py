@@ -2,7 +2,7 @@ import socket
 import time
 import sys
 import struct
-from game import Game
+from gameclient import Game
 from tools import fprint
 fprint("client.py")
 
@@ -41,42 +41,33 @@ class Client:
         data = struct.pack('!B H', data_type, message_length) + message.encode('utf-8')
         return data
 
-    def prep_tick_data(self):
+    def prep_tick_data(self, game):
         data_type = 1
-        keys = {
-            "w": 0,
-            "a": 0,
-            "s": 0,
-            "d": 0,
-            "SPACE": 0,
-            "SHIFT": 0,
-            "e": 0,
-            "f": 0,
-            "r": 0,
-            "q": 0,
-            "ESC": 0,
-            "CTRL": 0
-        }
-        mouse_pos = {"x": 0, "y": 0}
-        mouse_buttons = {
-            "left": 0,
-            "right": 0,
-            "middle": 0,
-            "back": 0,
-            "forward": 0
-        }
+        
         data = struct.pack(
-            '!B 12H 2H 5B',
+            '!B 12H 2H 3B',
             data_type,
-            keys["w"], keys["a"], keys["s"], keys["d"], keys["SPACE"], keys["SHIFT"],
-            keys["e"], keys["f"], keys["r"], keys["q"], keys["ESC"], keys["CTRL"],
-            mouse_pos["x"], mouse_pos["y"],
-            mouse_buttons["left"], mouse_buttons["right"], mouse_buttons["middle"],
-            mouse_buttons["back"], mouse_buttons["forward"]
+            game.inputdata["keys"]["w"],
+            game.inputdata["keys"]["a"],
+            game.inputdata["keys"]["s"],
+            game.inputdata["keys"]["d"],
+            game.inputdata["keys"]["SPACE"],
+            game.inputdata["keys"]["SHIFT"],
+            game.inputdata["keys"]["e"],
+            game.inputdata["keys"]["f"],
+            game.inputdata["keys"]["r"],
+            game.inputdata["keys"]["q"],
+            game.inputdata["keys"]["ESC"],
+            game.inputdata["keys"]["CTRL"],
+            game.inputdata["mouse_pos"]["x"],
+            game.inputdata["mouse_pos"]["y"],
+            game.inputdata["mouse_buttons"]["left"],
+            game.inputdata["mouse_buttons"]["right"],
+            game.inputdata["mouse_buttons"]["middle"],
         )
         return data
 
-    def receive_data(self):
+    def receive_data(self, game=None):
         try:
             data, address = self.udp_socket.recvfrom(1024)
             fprint(f"Received data of length {len(data)} from {address}")
@@ -92,25 +83,35 @@ class Client:
                     fprint(f"Error: Received data size {len(data[1:])} does not match expected size {expected_size}")
 
             elif data_type == 1:  # Tick data
-                offset = 1
-                num_entities = struct.unpack('!I', data[offset:offset+4])[0]
-                offset += 4
-                entities = []
-                for _ in range(num_entities):
-                    entity_id, sprite_length = struct.unpack('!I H', data[offset:offset+6])
-                    offset += 6
-                    sprite = struct.unpack(f'!{sprite_length}s', data[offset:offset+sprite_length])[0].decode('utf-8')
-                    offset += sprite_length
-                    x, y, scale, angle = struct.unpack('!f f f f', data[offset:offset+16])
-                    offset += 16
-                    entities.append({
-                        "id": entity_id,
-                        "sprite": sprite,
-                        "position": {"x": x, "y": y},
-                        "scale": scale,
-                        "angle": angle
-                    })
-                # fprint(f"Received game state: entities={entities}")
+                if game is None:
+                    fprint("Game instance is not provided for tick data")
+                    return
+                else:
+                    offset = 1
+                    num_entities = struct.unpack('!I', data[offset:offset+4])[0]
+                    offset += 4
+                    entities = []
+                    for _ in range(num_entities):
+                        # Unpack the entity data in the new format
+                        ip_address = socket.inet_ntoa(data[offset:offset+4])  # Convert 4-byte binary IP back to string
+                        offset += 4
+                        sprite_length = struct.unpack('!H', data[offset:offset+2])[0]
+                        offset += 2
+                        sprite = struct.unpack(f'!{sprite_length}s', data[offset:offset+sprite_length])[0].decode('utf-8')
+                        offset += sprite_length
+                        width, height, angle, scale, x, y = struct.unpack('!I I f f f f', data[offset:offset+24])
+                        offset += 24
+                        entities.append({
+                            "id": ip_address,
+                            "sprite": sprite,
+                            "dimensions": {"width": width, "height": height},
+                            "position": {"x": x, "y": y},
+                            "scale": scale,
+                            "angle": angle
+                        })
+                    game.entities = entities  # Update the game entities with the received data
+                    # fprint(f"Received game state: entities={entities}")
+                    # ! We have the data of the entities, now display them
 
                 # Now unpack player data
                 expected_size = struct.calcsize('!f f f f I f')
@@ -162,15 +163,17 @@ def main(username, ip):
 
     run = True
     while run:
-        client.receive_data()
+        
+        for event in game.pygame.event.get():
+            if event.type == game.pygame.QUIT:
+                run = False
+
+        client.receive_data(game)
 
         game.update()
 
-        client.send_data(client.prep_tick_data())
+        client.send_data(client.prep_tick_data(game))
         client.elapsed_time = time.time() - client.start_time
-
-        #if client.elapsed_time > 2:
-            #run = False
 
         time.sleep(max(0, client.SERVER_SETTINGS.TICK_INTERVAL - client.elapsed_time % client.SERVER_SETTINGS.TICK_INTERVAL))
 

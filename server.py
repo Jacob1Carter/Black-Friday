@@ -2,6 +2,8 @@ import socket
 import time
 import sys
 import struct
+from entities import PlayerEntity
+from gamehost import Game
 from tools import fprint
 fprint("server.py")
 
@@ -43,9 +45,9 @@ class Server:
             data_type = struct.unpack('!B', data[:1])[0]
 
             if data_type == 1:  # Key and mouse inputs
-                expected_size = struct.calcsize('!12H 2H 5B')
+                expected_size = struct.calcsize('!12H 2H 3B')
                 if len(data[1:]) == expected_size:
-                    unpacked_data = struct.unpack('!12H 2H 5B', data[1:])
+                    unpacked_data = struct.unpack('!12H 2H 3B', data[1:])
                     keys = {
                         "w": unpacked_data[0],
                         "a": unpacked_data[1],
@@ -65,9 +67,8 @@ class Server:
                         "left": unpacked_data[14],
                         "right": unpacked_data[15],
                         "middle": unpacked_data[16],
-                        "back": unpacked_data[17],
-                        "forward": unpacked_data[18]
                     }
+                    print(keys, mouse_pos, mouse_buttons)
                 else:
                     fprint(f"Error: Received data size {len(data[1:])} does not match expected size {expected_size}")
 
@@ -101,19 +102,39 @@ class Server:
         data = struct.pack('!B I f', data_type, max_clients, tick_rate)
         return data
 
-    def prep_entity_data(self):
-        # Prepare data to send to the client about the game state
-        entities = [
-            (1, "entity1.png", 100, 150, 1.0, 0),
-            (2, "entity2.png", 200, 250, 1.5, 45)
-        ]
+    def prep_entity_data(self, game):
+        """
+        Prepares entity data to send to the client in the new format.
+        """
+        entities = game.entities
         entity_data = struct.pack('!I', len(entities))  # Include the number of entities
+    
         for entity in entities:
-            entity_id, sprite, x, y, scale, angle = entity
+            # Ensure the image string is no more than 32 characters
+            sprite = entity.image[:32]
             sprite_encoded = sprite.encode('utf-8')
             sprite_length = len(sprite_encoded)
-            entity_data += struct.pack(f'!I H {sprite_length}s f f f f', entity_id, sprite_length, sprite_encoded, x, y, scale, angle)
-        
+    
+            # Ensure entity.id is a string IP address
+            if isinstance(entity.id, tuple):
+                ip_address = entity.id[0]  # Extract the IP address from the tuple
+            else:
+                ip_address = entity.id
+    
+            # Pack the entity data
+            entity_data += struct.pack(
+                f'!4s H {sprite_length}s I I f f f f',
+                socket.inet_aton(ip_address),  # Convert IP address to 4-byte binary format
+                sprite_length,
+                sprite_encoded,
+                entity.width,
+                entity.height,
+                entity.angle,
+                entity.scale,
+                entity.x,
+                entity.y
+            )
+    
         return entity_data
 
     def prep_player_data(self, client):
@@ -137,10 +158,10 @@ class Server:
         )
         return data
 
-    def send_tick_data(self):
+    def send_tick_data(self, game):
         # Prepare data to send to the client about the game state
         data_type = 1  # Tick data type
-        entity_data = self.prep_entity_data()
+        entity_data = self.prep_entity_data(game)
         for client_addr in self.client_addresses:
             player_data = self.prep_player_data(client=client_addr)
             total_data = struct.pack('!B', data_type) + entity_data + player_data
@@ -159,15 +180,24 @@ class Server:
 def main():
     fprint("Server is starting...")
     server = Server()
+    game = Game()
     
     run = True
     while run:
         server.receive_data()
-        server.send_tick_data()
-        server.elapsed_time = time.time() - server.start_time
 
-        #if server.elapsed_time > 3:
-            #run = False
+        for client in server.client_addresses:
+            safe = False
+            for entity in game.entities:
+                if entity.id == client:
+                    safe = True
+                    break
+            if not safe:
+                game.entities.append(PlayerEntity(client))
+        
+        server.send_tick_data(game)
+        
+        server.elapsed_time = time.time() - server.start_time
 
         time.sleep(max(0, server.SERVER_SETTINGS.TICK_INTERVAL - server.elapsed_time % server.SERVER_SETTINGS.TICK_INTERVAL))
     
