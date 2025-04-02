@@ -34,10 +34,10 @@ class Server:
         # confirmation message
         fprint(f"Server started at {self.server_address}")
     
-    def receive_data(self):
+    def receive_data(self, game=None):
         try:
             data, address = self.udp_socket.recvfrom(1024)
-            fprint(f"Received data of length {len(data)} from {address}")
+            # fprint(f"Received data of length {len(data)} from {address}")
             if address not in self.client_addresses:
                 self.client_addresses.append(address)
                 self.clients = len(self.client_addresses)
@@ -45,32 +45,36 @@ class Server:
             data_type = struct.unpack('!B', data[:1])[0]
 
             if data_type == 1:  # Key and mouse inputs
-                expected_size = struct.calcsize('!12H 2H 3B')
-                if len(data[1:]) == expected_size:
-                    unpacked_data = struct.unpack('!12H 2H 3B', data[1:])
-                    keys = {
-                        "w": unpacked_data[0],
-                        "a": unpacked_data[1],
-                        "s": unpacked_data[2],
-                        "d": unpacked_data[3],
-                        "SPACE": unpacked_data[4],
-                        "SHIFT": unpacked_data[5],
-                        "e": unpacked_data[6],
-                        "f": unpacked_data[7],
-                        "r": unpacked_data[8],
-                        "q": unpacked_data[9],
-                        "ESC": unpacked_data[10],
-                        "CTRL": unpacked_data[11]
-                    }
-                    mouse_pos = {"x": unpacked_data[12], "y": unpacked_data[13]}
-                    mouse_buttons = {
-                        "left": unpacked_data[14],
-                        "right": unpacked_data[15],
-                        "middle": unpacked_data[16],
-                    }
-                    print(keys, mouse_pos, mouse_buttons)
+                if not game:
+                    fprint("Game instance not provided for input handling.")
+                    return
                 else:
-                    fprint(f"Error: Received data size {len(data[1:])} does not match expected size {expected_size}")
+                    expected_size = struct.calcsize('!12H 2H 3B')
+                    if len(data[1:]) == expected_size:
+                        unpacked_data = struct.unpack('!12H 2H 3B', data[1:])
+                        keys = {
+                            "w": unpacked_data[0],
+                            "a": unpacked_data[1],
+                            "s": unpacked_data[2],
+                            "d": unpacked_data[3],
+                            "SPACE": unpacked_data[4],
+                            "SHIFT": unpacked_data[5],
+                            "e": unpacked_data[6],
+                            "f": unpacked_data[7],
+                            "r": unpacked_data[8],
+                            "q": unpacked_data[9],
+                            "ESC": unpacked_data[10],
+                            "CTRL": unpacked_data[11]
+                        }
+                        mouse_pos = {"x": unpacked_data[12], "y": unpacked_data[13]}
+                        mouse_buttons = {
+                            "left": unpacked_data[14],
+                            "right": unpacked_data[15],
+                            "middle": unpacked_data[16],
+                        }
+                        game.update_entity(address, keys, mouse_buttons, mouse_pos)
+                    else:
+                        fprint(f"Error: Received data size {len(data[1:])} does not match expected size {expected_size}")
 
             elif data_type == 2:  # Confirmation message or other simple string
                 message_length = struct.unpack('!H', data[1:3])[0]
@@ -123,14 +127,13 @@ class Server:
     
             # Pack the entity data
             entity_data += struct.pack(
-                f'!4s H {sprite_length}s I I f f f f',
+                f'!4s H {sprite_length}s I I f f f',
                 socket.inet_aton(ip_address),  # Convert IP address to 4-byte binary format
                 sprite_length,
                 sprite_encoded,
                 entity.width,
                 entity.height,
                 entity.angle,
-                entity.scale,
                 entity.x,
                 entity.y
             )
@@ -170,7 +173,7 @@ class Server:
 
     def send_data(self, data, client_address=None):
         self.udp_socket.sendto(data, client_address or self.server_address)
-        fprint(f"Sent data of length {len(data)} to {client_address or 'all clients'}")
+        # fprint(f"Sent data of length {len(data)} to {client_address or 'all clients'}")
 
     def exit(self):
         self.udp_socket.close()

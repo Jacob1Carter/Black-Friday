@@ -4,7 +4,6 @@ import sys
 import struct
 from gameclient import Game
 from tools import fprint
-fprint("client.py")
 
 class Client:
 
@@ -70,7 +69,7 @@ class Client:
     def receive_data(self, game=None):
         try:
             data, address = self.udp_socket.recvfrom(1024)
-            fprint(f"Received data of length {len(data)} from {address}")
+            # fprint(f"Received data of length {len(data)} from {address}")
             data_type = struct.unpack('!B', data[:1])[0]
 
             if data_type == 0:  # Server settings
@@ -90,28 +89,37 @@ class Client:
                     offset = 1
                     num_entities = struct.unpack('!I', data[offset:offset+4])[0]
                     offset += 4
-                    entities = []
                     for _ in range(num_entities):
                         # Unpack the entity data in the new format
                         ip_address = socket.inet_ntoa(data[offset:offset+4])  # Convert 4-byte binary IP back to string
                         offset += 4
                         sprite_length = struct.unpack('!H', data[offset:offset+2])[0]
                         offset += 2
-                        sprite = struct.unpack(f'!{sprite_length}s', data[offset:offset+sprite_length])[0].decode('utf-8')
+                        image = struct.unpack(f'!{sprite_length}s', data[offset:offset+sprite_length])[0].decode('utf-8')
                         offset += sprite_length
-                        width, height, angle, scale, x, y = struct.unpack('!I I f f f f', data[offset:offset+24])
-                        offset += 24
-                        entities.append({
-                            "id": ip_address,
-                            "sprite": sprite,
-                            "dimensions": {"width": width, "height": height},
-                            "position": {"x": x, "y": y},
-                            "scale": scale,
-                            "angle": angle
-                        })
-                    game.entities = entities  # Update the game entities with the received data
-                    # fprint(f"Received game state: entities={entities}")
-                    # ! We have the data of the entities, now display them
+                        width, height, angle, x, y = struct.unpack('!I I f f f', data[offset:offset+20])
+                        offset += 20
+
+                        if game.sprite_exists(ip_address):
+                            game.update_sprite(
+                                ip_address=ip_address,
+                                image=image,
+                                width=width,
+                                height=height,
+                                angle=angle,
+                                x=x,
+                                y=y
+                            )
+                        else:
+                            game.add_sprite(
+                                ip_address=ip_address,
+                                image=image,
+                                width=image,
+                                height=height,
+                                angle=angle,
+                                x=x,
+                                y=y
+                            )
 
                 # Now unpack player data
                 expected_size = struct.calcsize('!f f f f I f')
@@ -125,7 +133,6 @@ class Client:
                         "health": player_data[4],
                         "ability_1_cooldown": player_data[5]
                     }
-                    # fprint(f"Received player data: {player_info}")
                 else:
                     fprint(f"Error: Received data size {len(data[offset:])} does not match expected size {expected_size}")
 
@@ -147,7 +154,7 @@ class Client:
 
     def send_data(self, data):
         self.udp_socket.sendto(data, self.server_address)
-        fprint(f"Sent data of length {len(data)} to {self.server_address}")
+        # fprint(f"Sent data of length {len(data)} to {self.server_address}")
 
     def exit(self):
         # send disconnection message to server

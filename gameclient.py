@@ -2,6 +2,26 @@ from display import Display
 from tools import fprint
 import pygame
 
+
+class Sprite:
+
+    def __init__(self, id, image="none", width=1, height=1, angle=0, x=0, y=0):
+        self.id = id
+        self.image_name = "trolleysprite0"
+        self.angle = 0
+        self.width = 180
+        self.height = 360
+        self.image = pygame.transform.rotate(
+            pygame.transform.scale(
+                pygame.image.load(f"assets/{self.image_name}.png").convert_alpha(),
+                (self.width, self.height)
+            ),
+            self.angle
+        )
+        self.x = 0
+        self.y = 0
+
+
 class Game:
 
     def __init__(self):
@@ -36,7 +56,7 @@ class Game:
             }
         }
 
-        self.entities = []
+        self.sprites = []
 
     def update_inputs(self):
         x, y = pygame.mouse.get_pos()
@@ -98,3 +118,55 @@ class Game:
         self.update_inputs()
 
         self.display.update(self)
+    
+    def sprite_exists(self, id):
+        for sprite in self.sprites:
+            if sprite.id == id:
+                return True
+        return False
+    
+    def update_sprite(self, ip_address, image=None, width=None, height=None, angle=None, x=None, y=None):
+        for sprite in self.sprite:
+            if sprite.id == ip_address:
+                reload_image = False
+                if image is not None:
+                    if sprite.image_name != image:
+                        sprite.image_name = image
+                        reload_image = True
+                if width is not None:
+                    if sprite.width != width:
+                        sprite.width = width
+                        reload_image = True
+                if height is not None:
+                    if sprite.height != height:
+                        sprite.height = height
+                        reload_image = True
+                if angle is not None:
+                    if sprite.angle != angle:
+                        sprite.angle = angle
+                        reload_image = True
+                if x is not None:
+                    sprite.x = x
+                if y is not None:
+                    sprite.y = y
+                
+                if reload_image:
+                    sprite.image = pygame.image.rotate(
+                        pygame.image.scale(
+                            pygame.image.load(f"assets/{sprite.image_name}.png").convert_alpha(),
+                            (sprite.width, sprite.height)
+                        ),
+                        sprite.angle
+                    )
+
+    def add_sprite(self, ip_address, image="none", width=1, height=1, angle=0, x=0, y=0):
+        if not self.sprite_exists(id):
+            self.sprites.append(Sprite(
+                id=ip_address,
+                image=image,
+                width=width,
+                height=height,
+                angle=angle,
+                x=x,
+                y=y
+            ))

@@ -1,12 +1,19 @@
 import tkinter as tk
 from tkinter import ttk
 from tools import fprint
-fprint("launcher.py")
 
 def show_page(notebook, page_index):
     notebook.select(page_index)
 
 def main():
+
+    # FOR TESTING:
+    return {
+        "mode": "host_join",
+        "username": "test_user",
+        "ip": None
+    }
+
     root = tk.Tk()
     root.title("Black Friday Launcher")
     root.geometry("300x500")
