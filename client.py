@@ -67,6 +67,7 @@ class Client:
         return data
 
     def receive_data(self, game=None):
+
         try:
             data, address = self.udp_socket.recvfrom(1024)
             # fprint(f"Received data of length {len(data)} from {address}")

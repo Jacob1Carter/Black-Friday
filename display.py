@@ -18,9 +18,10 @@ class Display:
         self.game.pygame.display.set_caption(self.game.name)
     
     def update(self, game):
+        self.win.fill((0, 0, 0))
     
-        for entity in game.entities:
-            self.win.blit(entity.image, (entity.x, entity.y))
+        for sprite in game.sprites:
+            self.win.blit(sprite.image, (sprite.x, sprite.y))
     
         if self.UI:
             self.update_ui()

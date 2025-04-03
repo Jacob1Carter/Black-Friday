@@ -187,7 +187,7 @@ def main():
     
     run = True
     while run:
-        server.receive_data()
+        server.receive_data(game=game)
 
         for client in server.client_addresses:
             safe = False

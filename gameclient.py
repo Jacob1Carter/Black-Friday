@@ -126,7 +126,7 @@ class Game:
         return False
     
     def update_sprite(self, ip_address, image=None, width=None, height=None, angle=None, x=None, y=None):
-        for sprite in self.sprite:
+        for sprite in self.sprites:
             if sprite.id == ip_address:
                 reload_image = False
                 if image is not None:
