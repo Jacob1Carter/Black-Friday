@@ -21,7 +21,8 @@ class Display:
         self.win.fill((0, 0, 0))
     
         for sprite in game.sprites:
-            self.win.blit(sprite.image, (sprite.x, sprite.y))
+            game.pygame.draw.circle(self.win, (255, 0, 255), (sprite.x, sprite.y), 3)
+            self.win.blit(sprite.image, (sprite.left, sprite.top))
     
         if self.UI:
             self.update_ui()

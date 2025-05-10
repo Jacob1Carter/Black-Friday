@@ -11,15 +11,31 @@ class Sprite:
         self.angle = 0
         self.width = 180
         self.height = 360
+        self.x = 0
+        self.y = 0
+
+        self.left = self.x - self.width / 2
+        self.top = self.y - self.height / 2
+        self.right = self.x + self.width / 2
+        self.bottom = self.y + self.height / 2
+
+        self.angle_inverted = 0 - self.angle
+
         self.image = pygame.transform.rotate(
             pygame.transform.scale(
                 pygame.image.load(f"assets/{self.image_name}.png").convert_alpha(),
                 (self.width, self.height)
             ),
-            self.angle
+            self.angle_inverted
         )
-        self.x = 0
-        self.y = 0
+    
+    def update_transform(self):
+        self.left = self.x - self.width / 2
+        self.top = self.y - self.height / 2
+        self.right = self.x + self.width / 2
+        self.bottom = self.y + self.height / 2
+
+        self.angle_inverted = 0 - self.angle
 
 
 class Game:
@@ -151,13 +167,15 @@ class Game:
                     sprite.y = y
                 
                 if reload_image:
-                    sprite.image = pygame.image.rotate(
-                        pygame.image.scale(
+                    sprite.image = pygame.transform.rotate(
+                        pygame.transform.scale(
                             pygame.image.load(f"assets/{sprite.image_name}.png").convert_alpha(),
                             (sprite.width, sprite.height)
                         ),
-                        sprite.angle
+                        sprite.angle_inverted
                     )
+        
+                sprite.update_transform()
 
     def add_sprite(self, ip_address, image="none", width=1, height=1, angle=0, x=0, y=0):
         if not self.sprite_exists(id):
