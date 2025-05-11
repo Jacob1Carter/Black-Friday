@@ -7,27 +7,26 @@ class Sprite:
 
     def __init__(self, id, image="none", width=1, height=1, angle=0, x=0, y=0):
         self.id = id
-        self.image_name = "trolleysprite0"
+        self.image_name = "trolleysprite1"
         self.angle = 0
-        self.width = 180
+        self.width = 360
         self.height = 360
         self.x = 0
         self.y = 0
 
-        self.left = self.x - self.width / 2
-        self.top = self.y - self.height / 2
-        self.right = self.x + self.width / 2
-        self.bottom = self.y + self.height / 2
-
         self.angle_inverted = 0 - self.angle
 
-        self.image = pygame.transform.rotate(
-            pygame.transform.scale(
+        self.image_base = pygame.transform.scale(
                 pygame.image.load(f"assets/{self.image_name}.png").convert_alpha(),
                 (self.width, self.height)
-            ),
+            )
+        
+        self.image = pygame.transform.rotate(
+            self.image_base,
             self.angle_inverted
         )
+
+        self.rect = self.image.get_rect(center=(self.x, self.y))
     
     def update_transform(self):
         self.left = self.x - self.width / 2
@@ -36,6 +35,13 @@ class Sprite:
         self.bottom = self.y + self.height / 2
 
         self.angle_inverted = 0 - self.angle
+
+        self.image = pygame.transform.rotate(
+            self.image_base,
+            self.angle_inverted
+        )
+
+        self.rect = self.image.get_rect(center=(self.x, self.y))
 
 
 class Game:

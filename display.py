@@ -22,7 +22,7 @@ class Display:
     
         for sprite in game.sprites:
             game.pygame.draw.circle(self.win, (255, 0, 255), (sprite.x, sprite.y), 3)
-            self.win.blit(sprite.image, (sprite.left, sprite.top))
+            self.win.blit(sprite.image, sprite.rect)
     
         if self.UI:
             self.update_ui()

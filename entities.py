@@ -6,7 +6,7 @@ class PlayerEntity:
     def __init__(self, id):
         self.id = id
 
-        self.image = "trolleysprite2"
+        self.image = "trolleysprite1"
         self.width = 360
         self.height = 360
         self.angle = 0
