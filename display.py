@@ -21,8 +21,11 @@ class Display:
         self.win.fill((0, 0, 0))
     
         for sprite in game.sprites:
+            for image in sprite.complete_images:
+                self.win.blit(image, sprite.rect)
             game.pygame.draw.circle(self.win, (255, 0, 255), (sprite.x, sprite.y), 3)
-            self.win.blit(sprite.image, sprite.rect)
+            game.pygame.draw.rect(self.win, (255, 0, 0), sprite.hitbox_human.rect, 1)
+            game.pygame.draw.rect(self.win, (0, 255, 0), sprite.hitbox_trolley.rect, 1)
     
         if self.UI:
             self.update_ui()

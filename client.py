@@ -2,6 +2,7 @@ import socket
 import time
 import sys
 import struct
+import ast
 from gameclient import Game
 from tools import fprint
 
@@ -96,7 +97,8 @@ class Client:
                         offset += 4
                         sprite_length = struct.unpack('!H', data[offset:offset+2])[0]
                         offset += 2
-                        image = struct.unpack(f'!{sprite_length}s', data[offset:offset+sprite_length])[0].decode('utf-8')
+                        images_str = struct.unpack(f'!{sprite_length}s', data[offset:offset+sprite_length])[0].decode('utf-8')
+                        images = ast.literal_eval(images_str)  # Convert string representation of list back to list
                         offset += sprite_length
                         width, height, angle, x, y = struct.unpack('!I I f f f', data[offset:offset+20])
                         offset += 20
@@ -104,7 +106,7 @@ class Client:
                         if game.sprite_exists(ip_address):
                             game.update_sprite(
                                 ip_address=ip_address,
-                                image=image,
+                                images=images,
                                 width=width,
                                 height=height,
                                 angle=angle,
@@ -114,8 +116,8 @@ class Client:
                         else:
                             game.add_sprite(
                                 ip_address=ip_address,
-                                image=image,
-                                width=image,
+                                images=images,
+                                width=width,
                                 height=height,
                                 angle=angle,
                                 x=x,

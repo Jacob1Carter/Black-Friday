@@ -114,8 +114,8 @@ class Server:
         entity_data = struct.pack('!I', len(entities))  # Include the number of entities
     
         for entity in entities:
-            # Ensure the image string is no more than 32 characters
-            sprite = entity.image[:32]
+            # Ensure the images string is no more than 128 characters
+            sprite = str(entity.images)[:128]
             sprite_encoded = sprite.encode('utf-8')
             sprite_length = len(sprite_encoded)
     
@@ -131,8 +131,8 @@ class Server:
                 socket.inet_aton(ip_address),  # Convert IP address to 4-byte binary format
                 sprite_length,
                 sprite_encoded,
-                entity.width,
-                entity.height,
+                entity.sprite_width,
+                entity.sprite_height,
                 entity.angle,
                 entity.x,
                 entity.y

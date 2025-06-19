@@ -1,0 +1,63 @@
+turn slower
+
+sprites need to be layered in order
+sprite needs to stop spinning when stationary.
+
+
+
+
+
+
+PLAYER HAS:
+
+    1 entity:
+
+        180 x 360
+
+    2 hitboxes:
+
+        human:
+        180 x 100
+
+        trolley:
+        180 x 260
+    
+    ALL PLAYER SPRITES ARE 360 x 540,
+    LAYERED ONTO EACH OTHER
+
+        
+
+
+
+
+
+
+Damage and healing system:
+
+trolley:
+
+health is damaged when ramming or when attacked
+
+health is healed usig:
+
+Most health, slowest, more efficient, rarer             -           least health, fastest, lesss efficient, more common
+steel tubing + screws     steel tubing + duct tape              aliminum tubing + screws       aliminum tubing + duct tape
+
+Name        Health      Speed       Rarity
+Steel       Very high   slow        rare
+screws      High        quite slow  uncommon
+aluminum    Medium      fast        Common
+Duct tape   Low         Very fast   Very common
+
+healer              ratio speed:health
+steel+screws        1:4
+steel+tape          3:3
+aluminium+screws    2:2
+aluminium+tape      4:1
+
+
+human:
+
+health is damaged when hit, and a little when ramming
+
+various health items idrk

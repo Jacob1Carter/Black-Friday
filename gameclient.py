@@ -3,30 +3,82 @@ from tools import fprint
 import pygame
 
 
+class Hitbox:
+
+    def __init__(self, entity, width, height, rel_x, rel_y):
+        self.entity = entity
+
+        self.width = width
+        self.height = height
+        self.rel_x = rel_x
+        self.rel_y = rel_y
+        self.x = self.entity.x + rel_x
+        self.y = self.entity.y + rel_y
+
+        self.left = self.x - self.width / 2
+        self.top = self.y - self.height / 2
+        self.right = self.x + self.width / 2
+        self.bottom = self.y + self.height / 2
+
+        self.rect = (self.left, self.top, self.width, self.height)
+
+    def update_transform(self):
+        self.x = self.entity.x + self.rel_x
+        self.y = self.entity.y + self.rel_y
+
+        self.left = self.x - self.width / 2
+        self.top = self.y - self.height / 2
+        self.right = self.x + self.width / 2
+        self.bottom = self.y + self.height / 2
+
+        self.rect = (self.left, self.top, self.width, self.height)
+
+
 class Sprite:
 
-    def __init__(self, id, image="none", width=1, height=1, angle=0, x=0, y=0):
+    def __init__(self, id, images=[], width=1, height=1, angle=0, x=0, y=0):
         self.id = id
-        self.image_name = "trolleysprite1"
-        self.angle = 0
-        self.width = 360
-        self.height = 360
-        self.x = 0
-        self.y = 0
+        self.images = images
+        self.angle = angle
+        self.width = width
+        self.height = height
+        self.x = x
+        self.y = y
 
         self.angle_inverted = 0 - self.angle
 
-        self.image_base = pygame.transform.scale(
-                pygame.image.load(f"assets/{self.image_name}.png").convert_alpha(),
-                (self.width, self.height)
+        self.reload_images()
+
+        # Hitboxes
+
+        self.hitbox_human = Hitbox(self, 180, 100, 0, 190)
+
+        self.hitbox_trolley = Hitbox(self, 180, 260, 0, 10)
+
+        fprint(self.hitbox_human.rect)
+
+    def reload_images(self):
+        self.loaded_images = []
+        for image_name in self.images:
+            self.loaded_images.append(pygame.image.load(f"assets/{image_name}.png").convert_alpha())
+        
+        self.reformat_images()
+    
+    def reformat_images(self):
+        self.complete_images = []
+        for image in self.loaded_images:
+            self.complete_images.append(
+                pygame.transform.rotate(
+                    pygame.transform.scale(image, (self.width, self.height)),
+                    self.angle_inverted
+                )
             )
         
-        self.image = pygame.transform.rotate(
-            self.image_base,
-            self.angle_inverted
-        )
+        if len(self.complete_images) > 0:
+            self.rect = self.complete_images[0].get_rect(center=(self.x, self.y))
+        else:
+            self.rect = pygame.Rect(0, 0, self.width, self.height)
 
-        self.rect = self.image.get_rect(center=(self.x, self.y))
     
     def update_transform(self):
         self.left = self.x - self.width / 2
@@ -36,12 +88,10 @@ class Sprite:
 
         self.angle_inverted = 0 - self.angle
 
-        self.image = pygame.transform.rotate(
-            self.image_base,
-            self.angle_inverted
-        )
+        self.reformat_images()
 
-        self.rect = self.image.get_rect(center=(self.x, self.y))
+        self.hitbox_human.update_transform()
+        self.hitbox_trolley.update_transform()
 
 
 class Game:
@@ -147,47 +197,41 @@ class Game:
                 return True
         return False
     
-    def update_sprite(self, ip_address, image=None, width=None, height=None, angle=None, x=None, y=None):
+    def update_sprite(self, ip_address, images=None, width=None, height=None, angle=None, x=None, y=None):
         for sprite in self.sprites:
             if sprite.id == ip_address:
-                reload_image = False
-                if image is not None:
-                    if sprite.image_name != image:
-                        sprite.image_name = image
-                        reload_image = True
+                reload_images = False
+                if images is not None:
+                    if sprite.images != images:
+                        sprite.images = images
+                        reload_images = True
                 if width is not None:
                     if sprite.width != width:
                         sprite.width = width
-                        reload_image = True
                 if height is not None:
                     if sprite.height != height:
                         sprite.height = height
-                        reload_image = True
                 if angle is not None:
                     if sprite.angle != angle:
                         sprite.angle = angle
-                        reload_image = True
                 if x is not None:
                     sprite.x = x
                 if y is not None:
                     sprite.y = y
-                
-                if reload_image:
-                    sprite.image = pygame.transform.rotate(
-                        pygame.transform.scale(
-                            pygame.image.load(f"assets/{sprite.image_name}.png").convert_alpha(),
-                            (sprite.width, sprite.height)
-                        ),
-                        sprite.angle_inverted
-                    )
-        
+
                 sprite.update_transform()
 
-    def add_sprite(self, ip_address, image="none", width=1, height=1, angle=0, x=0, y=0):
+                if reload_images or not sprite.loaded_images:
+                    fprint(f"Reloading images for sprite {sprite.id} with images {sprite.images}")
+                    sprite.reload_images()
+                else:
+                    sprite.reformat_images()
+
+    def add_sprite(self, ip_address, images=[], width=1, height=1, angle=0, x=0, y=0):
         if not self.sprite_exists(id):
             self.sprites.append(Sprite(
                 id=ip_address,
-                image=image,
+                images=images,
                 width=width,
                 height=height,
                 angle=angle,
