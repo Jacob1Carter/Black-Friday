@@ -1,37 +1,55 @@
 from display import Display
 from tools import fprint
 import pygame
+import math
 
 
 class Hitbox:
 
     def __init__(self, entity, width, height, rel_x, rel_y):
         self.entity = entity
-
         self.width = width
         self.height = height
         self.rel_x = rel_x
         self.rel_y = rel_y
         self.x = self.entity.x + rel_x
         self.y = self.entity.y + rel_y
+        self.angle = self.entity.angle  # Store the angle
 
-        self.left = self.x - self.width / 2
-        self.top = self.y - self.height / 2
-        self.right = self.x + self.width / 2
-        self.bottom = self.y + self.height / 2
-
-        self.rect = (self.left, self.top, self.width, self.height)
+        self.update_transform()
 
     def update_transform(self):
-        self.x = self.entity.x + self.rel_x
-        self.y = self.entity.y + self.rel_y
+        # Rotate rel_x, rel_y by entity.angle
+        angle_rad = math.radians(self.entity.angle)
+        rotated_x = self.rel_x * math.cos(angle_rad) - self.rel_y * math.sin(angle_rad)
+        rotated_y = self.rel_x * math.sin(angle_rad) + self.rel_y * math.cos(angle_rad)
+        self.x = self.entity.x + rotated_x
+        self.y = self.entity.y + rotated_y
 
-        self.left = self.x - self.width / 2
-        self.top = self.y - self.height / 2
-        self.right = self.x + self.width / 2
-        self.bottom = self.y + self.height / 2
+        self.angle = self.entity.angle  # Update hitbox angle
 
-        self.rect = (self.left, self.top, self.width, self.height)
+        # Calculate the four corners of the hitbox after rotation
+        hw, hh = self.width / 2, self.height / 2
+        corners = [
+            (-hw, -hh),
+            ( hw, -hh),
+            ( hw,  hh),
+            (-hw,  hh)
+        ]
+        angle_rad = math.radians(self.angle)
+        self.corners = []
+        for cx, cy in corners:
+            rx = cx * math.cos(angle_rad) - cy * math.sin(angle_rad)
+            ry = cx * math.sin(angle_rad) + cy * math.cos(angle_rad)
+            self.corners.append((self.x + rx, self.y + ry))
+
+        # Optionally, update the bounding rect (axis-aligned)
+        xs, ys = zip(*self.corners)
+        self.left = min(xs)
+        self.right = max(xs)
+        self.top = min(ys)
+        self.bottom = max(ys)
+        self.rect = (self.left, self.top, self.right - self.left, self.bottom - self.top)
 
 
 class Sprite:
@@ -96,11 +114,27 @@ class Sprite:
 
 class Game:
 
+    class DebugDot:
+
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+            self.rect = pygame.Rect(x, y, 10, 10)
+            self.color = (255, 0, 0)
+
+        def update(self):
+            pass
+
     def __init__(self):
         self.pygame = pygame
 
         self.name = "Black Friday"
         self.display = Display(self)
+
+        self.debug_dots = []
+        for i in range(self.display.WIDTH // 30):
+            for j in range(self.display.HEIGHT // 30):
+                self.debug_dots.append(pygame.Rect(i * 30, j * 30, 10, 10))
 
         self.inputdata = {
             "keys": {
@@ -188,6 +222,10 @@ class Game:
 
     def update(self):
         self.update_inputs()
+
+        for debug_dot in self.debug_dots:
+            pass
+            #debug_dot.update()
 
         self.display.update(self)
     
