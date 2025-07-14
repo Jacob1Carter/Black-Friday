@@ -53,7 +53,7 @@ class PlayerEntity:
         self.angle = 0
         self.angle_inverted = 0 - self.angle
 
-        self.movespeed = 3
+        self.movespeed = 9
         self.turnspeed = 1.5
     
     def update_transform(self):

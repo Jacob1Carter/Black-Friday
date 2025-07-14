@@ -69,9 +69,11 @@ class Sprite:
 
         # Hitboxes
 
-        self.hitbox_human = Hitbox(self, 180, 100, 0, 190)
+        self.hitbox_human = Hitbox(self, 180, 130, 0, 205)
 
         self.hitbox_trolley = Hitbox(self, 180, 260, 0, 10)
+
+        self.hitbox_ram = Hitbox(self, 180, 150, 0, -195)
 
         fprint(self.hitbox_human.rect)
 
@@ -110,6 +112,7 @@ class Sprite:
 
         self.hitbox_human.update_transform()
         self.hitbox_trolley.update_transform()
+        self.hitbox_ram.update_transform()
 
 
 class Game:

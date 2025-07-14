@@ -25,7 +25,10 @@ PLAYER HAS:
     ALL PLAYER SPRITES ARE 360 x 540,
     LAYERED ONTO EACH OTHER
 
-        
+
+there needs to be differnt hitboxes for taking and dealing damage. For example, the player and trolley
+both have hitboxes the size of themselves for taking damage, but any projectiles will have hitboxes for
+dealig damage, and there will be a hitbox at the front fo the trollety for ram damage
 
 
 

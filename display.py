@@ -39,6 +39,12 @@ class Display:
                 start = corners[i]
                 end = corners[(i + 1) % 4]
                 game.pygame.draw.line(self.win, (0, 255, 0), start, end, 1)
+            
+            corners = sprite.hitbox_ram.corners
+            for i in range(4):
+                start = corners[i]
+                end = corners[(i + 1) % 4]
+                game.pygame.draw.line(self.win, (0, 0, 255), start, end, 1)
     
         if self.UI:
             self.update_ui()
